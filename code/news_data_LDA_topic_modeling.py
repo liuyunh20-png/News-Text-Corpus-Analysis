@@ -5,6 +5,8 @@ from sklearn.decomposition import LatentDirichletAllocation
 
 INPUT_FILE = "news_data_rewrite.csv"
 OUTPUT_FILE = "news_data_LDA_classify_result.csv"
+# 同文件名txt
+OUTPUT_TXT = "news_data_LDA_topic_result.txt"
 N_TOPICS = 5  # 主题数量
 
 # 加载数据
@@ -27,14 +29,24 @@ df['topic_prob'] = doc_topic.max(axis=1)   # 获取主题的概率
 # 获取词汇表
 vocab = vectorizer.get_feature_names_out()
 
-# 打印每个主题的核心词
+# 存储主题关键词，用于写入txt
+topic_keywords = []
 for i in range(N_TOPICS):
     top_words = [vocab[j] for j in lda.components_[i].argsort()[-10:][::-1]]
-    print(f"主题{i}: {' '.join(top_words)}")
+    line = f"主题{i}: {' '.join(top_words)}"
+    topic_keywords.append(line)
+    print(line)
 
-# 保存结果（新增topic_id和topic_prob列）
+# 保存结果CSV
 df[['news_num', 'news_content', 'topic_id', 'topic_prob']].to_csv(
     OUTPUT_FILE, index=False, encoding='utf-8'
 )
 
-print(f"\n结果已保存至 {OUTPUT_FILE}")
+# 新增：写入同名txt，保存各主题关键词
+with open(OUTPUT_TXT, "w", encoding="utf-8") as f:
+    f.write("LDA主题模型各主题Top10关键词\n")
+    f.write("=" * 40 + "\n")
+    f.write("\n".join(topic_keywords))
+
+print(f"\nCSV结果已保存至 {OUTPUT_FILE}")
+print(f"主题关键词TXT已保存至 {OUTPUT_TXT}")
