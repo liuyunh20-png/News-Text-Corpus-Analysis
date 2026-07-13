@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 df = pd.read_csv("data_word_tag_frequency.csv")
 
 # 只保留频率>0的有效数据
-df = df[df['Frequency'] > 4000].dropna()
+df = df[df['Frequency'] > 400].dropna()
 
 # 绘制饼状图
 plt.figure(figsize=(8, 8))
