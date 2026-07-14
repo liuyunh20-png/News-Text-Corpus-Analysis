@@ -1,0 +1,2 @@
+Method
+This section describes the corpus construction procedure and the end-to-end natural language processing pipeline adopted to analyse China Daily’s official discourse on AI governance. The workflow consists of four sequential stages: data collection and preprocessing, linguistic feature extraction and visualisation, unsupervised latent topic modelling, and automated sentiment quantification. All code was implemented in Python.
