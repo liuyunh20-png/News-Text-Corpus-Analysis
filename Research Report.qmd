@@ -1,7 +1,11 @@
 ## 3. Method
     This section describes the corpus construction procedure and the end-to-end natural language processing pipeline adopted to analyse China Daily’s official discourse on AI governance. The workflow consists of four sequential stages: data collection and preprocessing, linguistic feature extraction and visualisation, unsupervised latent topic modelling, and automated sentiment quantification. All code was implemented in Python.
-### 3.1 Data Preprocessing
-#### 3.1.1 Text Cleaning and Preprocessing
+### 3.1 Data Preprocessing: Text Cleaning and Preprocessing
     A multi-stage filtering procedure was executed to remove noise and standardise textual inputs. 
     The first step is record screening. Empty articles and redundant metadata fields were deleted, retaining only valid news entries. This step reduced the corpus to 3264 usable articles. The second step is attribute extraction. Target textual fields (author and news content) were extracted and converted into plain text (TXT) format for subsequent processing. Irrelevant boilerplate text, editorial disclaimers and redundant sentences were removed using regular expression matching. The third step is tokenisation and stopword filtering. The cleaned text corpus was processed via a custom Python script. Raw text was split into individual tokens, and custom stopword lists were applied to filter out low-information function words. The preprocessed text was exported for further linguistic analysis. The next step is structured data reconstruction. Cleaned textual data was reorganised into a standardised CSV file (news_data_rewrite.csv) with two core fields: news_num (unique article identifier) and news_content (main news text), serving as the unified input for topic modelling and sentiment analysis. 
+
+### 3.2 Lexical Feature Engineering and Visual Analysis
+Based on the preprocessed corpus, systematic lexical analysis was performed to identify dominant linguistic patterns in official discourse.
+First, token frequency statistics were computed and stored in a structured CSV file. Lemmatisation was applied to unify inflected word forms and eliminate morphological variation. Part-of-speech tagging using the NLTK pos_tag module was implemented to filter lexical items: only nouns, verbs and adjectives were retained, as these word classes carry substantive semantic meaning for framing policy narratives.
+The refined word frequency dataset (data_word_tag_frequency.csv) was used to generate multiple visual outputs. Matplotlib was adopted to produce high-frequency word bar charts and proportional pie charts, and word cloud visualisations were generated to intuitively display the most salient lexical items across the corpus. 
 
