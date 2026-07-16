@@ -1,4 +1,16 @@
 
+## 2. Data
+
+### 2.1 Corpus Construction and Extension
+
+The corpus for this study was sourced from the English-language edition of *China Daily*. Both rounds of data collection employed the same retrieval parameters — using "AI governance" as the search keyword, sorted by publication date in descending order, with deduplication enabled — and were executed via the Houyi Collector, a web scraping tool that exports results directly to CSV format.
+
+The initial collection, completed on 29 November 2025, retrieved 3,395 news articles spanning from 4 March 2019 to 29 November 2025. After multi-stage cleaning and filtering, 3,264 valid articles were retained for analysis.
+
+A supplementary collection was conducted on 9 July 2026 through China Daily's on-site search engine (newssearch.chinadaily.com.cn) using the identical retrieval parameters to capture newly published content. This round added 446 articles, covering the period from 1 December 2025 to 9 July 2026. The supplementary data underwent the same cleaning pipeline and valid articles were incorporated into the final corpus. The two collections together yielded 3,841 raw records, spanning from March 2019 to July 2026 — a continuous coverage of approximately seven years and four months, with only a single-day gap (30 November 2025) between the two batches.
+
+All raw data files are stored in CSV format with six standardised fields: title, URL, author, thumbnail, subtitle, and full-text content. The raw data files and complete analysis code are available in the project's GitHub repository.
+
 ## 3. Method
 This section describes the corpus construction procedure and the end-to-end natural language processing pipeline adopted to analyse China Daily’s official discourse on AI governance. The workflow consists of four sequential stages: data collection and preprocessing, linguistic feature extraction and visualisation, unsupervised latent topic modelling, and automated sentiment quantification. All code was implemented in Python.
 
