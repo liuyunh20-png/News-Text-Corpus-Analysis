@@ -77,6 +77,25 @@ def load_sentiment():
                 total += 1
     return dict(counts), total
 
+# ---------------- 5. 情感随时间变化（按季度，基于全量语料） ----------------
+def load_quarterly():
+    path = os.path.join(BASE, "data-original", "news_data_sentiment_quarterly.csv")
+    labels, mean, pos, neu, neg, n = [], [], [], [], [], []
+    if not os.path.exists(path):
+        return labels, mean, pos, neu, neg, n
+    with open(path, "r", encoding="utf-8-sig") as f:
+        for row in csv.DictReader(f):
+            labels.append(row["quarter"])
+            mean.append(round(float(row["mean_polarity"]), 4))
+            pos.append(round(float(row["pos_share"]), 3))
+            neu.append(round(float(row["neu_share"]), 3))
+            neg.append(round(float(row["neg_share"]), 3))
+            try:
+                n.append(int(row["n_articles"]))
+            except ValueError:
+                n.append(0)
+    return labels, mean, pos, neu, neg, n
+
 # ================= 汇总计算 =================
 word_freq = load_word_freq(100)
 all_lemma = load_word_freq(None)
@@ -85,6 +104,8 @@ lemma_unique = len(all_lemma)
 raw_total, raw_unique = load_raw_freq()
 topics = load_topics()
 sentiment, total_articles = load_sentiment()
+(q_labels, q_mean, q_pos, q_neu, q_neg, q_n) = load_quarterly()
+ts_total = sum(q_n)
 
 TOP_N_BAR = 30
 bar_words = [w for w, _ in word_freq[:TOP_N_BAR]][::-1]
@@ -120,6 +141,8 @@ data_payload = {
     "raw_total": raw_total, "raw_unique": raw_unique,
     "lemma_total": lemma_total, "lemma_unique": lemma_unique,
     "compression": compression, "pos_pct": pos_pct, "neu_pct": neu_pct, "neg_pct": neg_pct,
+    "ts_total": ts_total,
+    "q_labels": q_labels, "q_mean": q_mean, "q_pos": q_pos, "q_neu": q_neu, "q_neg": q_neg, "q_n": q_n,
 }
 
 # ================= 生成 HTML =================
@@ -246,6 +269,21 @@ HTML = """<!DOCTYPE html>
   <div class="grid3" id="topics"></div>
 </section>
 
+<!-- 情感随时间变化（按季度） -->
+<section class="wrap">
+  <h2 class="sec">情感随时间变化 · 按季度</h2>
+  <div class="sub">基于<b>全量语料</b>（2018–2026，共 __TS_TOTAL__ 篇）的 TextBlob 极性得分，按季度聚合，观察新闻态度随时间的变化</div>
+
+  <div class="card"><div id="trend" class="chart"></div></div>
+  <div class="insight">📌 <b>解读：</b>各季度平均 polarity 长期位于 <b>0.07–0.12</b> 的温和正向区间，整体基调稳定、建设性为主；
+    其中 <b>2022Q1 达到峰值（0.122）</b>，此后回落并稳定在约 0.095–0.10。说明 China Daily 对 AI 治理的报道始终保持审慎乐观，未出现明显情绪拐点。
+    <span style="color:#9aa6d6">（注：2018Q3 仅 1 篇、2026Q3 为进行中季度，解读时宜谨慎。）</span></div>
+
+  <div class="card" style="margin-top:22px;"><div id="mix" class="chart"></div></div>
+  <div class="insight">📌 <b>解读：</b>中性报道在各季度占 <b>50%–65%</b>，主导地位稳固；积极占比由 2019 年的约 27–40% 升至 2022–2026 年的 <b>46%–49%</b>，
+    呈现温和上行后趋稳；消极占比极低（各季度 ≤ 3.4%，多数仅 0–2%），进一步印证语料以正面、建设性叙事为主的特征。</div>
+</section>
+
 <!-- 结论与启示 -->
 <section class="wrap">
   <h2 class="sec">结论与启示</h2>
@@ -304,7 +342,38 @@ D.topics.forEach(t=>{
     <div class="tags">${tags}</div>`;
   tc.appendChild(el);
 });
-window.addEventListener('resize',()=>{bar.resize();cloud.resize();sent.resize();});
+const trend=echarts.init(document.getElementById('trend'));
+trend.setOption({
+  grid:{left:60,right:30,top:30,bottom:90},
+  tooltip:{trigger:'axis',formatter:function(ps){const i=ps[0].dataIndex;
+    return D.q_labels[i]+'<br/>平均 polarity: <b>'+D.q_mean[i]+'</b><br/>样本量: '+D.q_n[i]+' 篇';}},
+  xAxis:{type:'category',data:D.q_labels,axisLabel:{color:'#cfd8ff',rotate:90,fontSize:10},
+    axisLine:{lineStyle:{color:'rgba(255,255,255,.2)'}}},
+  yAxis:{type:'value',name:'平均 polarity',nameTextStyle:{color:'#cfd8ff'},
+    axisLabel:{color:'#cfd8ff'},splitLine:{lineStyle:{color:'rgba(255,255,255,.08)'}}},
+  series:[{type:'line',data:D.q_mean,smooth:true,symbol:'circle',symbolSize:7,
+    lineStyle:{width:3,color:'#4ECDC4'},itemStyle:{color:'#FFD93D'},
+    areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(78,205,196,.45)'},{offset:1,color:'rgba(78,205,196,0)'}])},
+    markLine:{silent:true,symbol:'none',data:[{yAxis:0}],lineStyle:{color:'grey',type:'dashed'}}}]
+});
+
+const mix=echarts.init(document.getElementById('mix'));
+mix.setOption({
+  grid:{left:60,right:30,top:36,bottom:90},
+  tooltip:{trigger:'axis',axisPointer:{type:'shadow'},valueFormatter:v=>(v*100).toFixed(1)+'%'},
+  legend:{data:['positive','neutral','negative'],textStyle:{color:'#cfd8ff'},top:0},
+  xAxis:{type:'category',data:D.q_labels,axisLabel:{color:'#cfd8ff',rotate:90,fontSize:10},
+    axisLine:{lineStyle:{color:'rgba(255,255,255,.2)'}}},
+  yAxis:{type:'value',max:1,axisLabel:{color:'#cfd8ff',formatter:v=>(v*100)+'%'},
+    splitLine:{lineStyle:{color:'rgba(255,255,255,.08)'}}},
+  series:[
+    {name:'positive',type:'bar',stack:'s',data:D.q_pos,itemStyle:{color:'#2ED573'}},
+    {name:'neutral',type:'bar',stack:'s',data:D.q_neu,itemStyle:{color:'#A4B0BE'}},
+    {name:'negative',type:'bar',stack:'s',data:D.q_neg,itemStyle:{color:'#FF6B81'}}
+  ]
+});
+
+window.addEventListener('resize',()=>{bar.resize();cloud.resize();sent.resize();trend.resize();mix.resize();});
 </script>
 </body>
 </html>"""
@@ -319,6 +388,7 @@ HTML = (HTML
         .replace("__NEU__", str(neu_pct))
         .replace("__NEG__", str(neg_pct))
         .replace("__RAWUNIQ_WAN__", f"{raw_unique/10000:.1f}万")
+        .replace("__TS_TOTAL__", str(ts_total))
         .replace("__DATA__", json.dumps(data_payload, ensure_ascii=False)))
 
 out_path = os.path.join(BASE, "report.html")
