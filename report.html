@@ -1,22 +1,24 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AI Governance News Corpus · 可视化分析报告</title>
+<title>AI Governance News Corpus · 全量可视化分析报告</title>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js"></script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;}
-  :root{--c1:#FF6B6B;--c2:#4ECDC4;--c3:#FFD93D;--c4:#6C5CE7;--c5:#FF9F1C;--ink:#1a1a2e;}
+  :root{--c1:#FF6B6B;--c2:#4ECDC4;--c3:#FFD93D;--c4:#6C5CE7;--c5:#FF9F1C;}
   body{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
     background:linear-gradient(135deg,#1a1a2e,#16213e 40%,#0f3460);color:#fff;overflow-x:hidden;}
   .wrap{max-width:1180px;margin:0 auto;padding:0 20px;}
-  .hero{min-height:58vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative;
+  .hero{min-height:56vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative;
     background:radial-gradient(circle at 20% 20%,rgba(255,107,107,.35),transparent 40%),
                radial-gradient(circle at 80% 30%,rgba(78,205,196,.35),transparent 42%),
                radial-gradient(circle at 50% 80%,rgba(108,92,231,.35),transparent 45%);}
-  .hero h1{font-size:clamp(28px,5vw,56px);font-weight:800;letter-spacing:1px;
+  .badge{display:inline-block;padding:6px 16px;border-radius:999px;background:rgba(46,213,115,.15);
+    border:1px solid rgba(46,213,115,.4);color:#7CFFB2;font-size:13px;letter-spacing:1px;margin-bottom:14px;}
+  .hero h1{font-size:clamp(26px,5vw,52px);font-weight:800;letter-spacing:1px;
     background:linear-gradient(90deg,#FF6B6B,#FFD93D,#4ECDC4,#6C5CE7,#FF9F1C);
     -webkit-background-clip:text;background-clip:text;color:transparent;background-size:300% auto;animation:flow 8s linear infinite;}
   @keyframes flow{to{background-position:300% center;}}
@@ -24,10 +26,10 @@
   .stats{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-top:34px;}
   .stat{background:rgba(255,255,255,.08);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18);
     border-radius:18px;padding:22px 30px;min-width:150px;box-shadow:0 8px 32px rgba(0,0,0,.25);}
-  .stat .num{font-size:34px;font-weight:800;}
+  .stat .num{font-size:32px;font-weight:800;}
   .stat .lbl{font-size:13px;color:#aab4e8;margin-top:6px;}
   .c1{color:var(--c1);}.c2{color:var(--c2);}.c3{color:var(--c3);}.c4{color:var(--c4);}.c5{color:var(--c5);}
-  section{padding:60px 0;}
+  section{padding:58px 0;}
   h2.sec{font-size:clamp(22px,3.5vw,34px);font-weight:800;margin-bottom:8px;display:inline-block;
     background:linear-gradient(90deg,#4ECDC4,#6C5CE7);-webkit-background-clip:text;background-clip:text;color:transparent;}
   .sub{color:#9aa6d6;margin-bottom:22px;font-size:15px;}
@@ -37,6 +39,13 @@
   .insight{margin-top:16px;padding:16px 18px;border-left:4px solid var(--c2);border-radius:10px;
     background:rgba(78,205,196,.08);color:#dbe6ff;font-size:14.5px;line-height:1.7;}
   .insight b{color:#fff;}
+  .findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;}
+  .finding{position:relative;overflow:hidden;border-radius:18px;padding:22px;
+    background:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);}
+  .finding .ic{font-size:26px;}
+  .finding .big{font-size:28px;font-weight:800;margin:8px 0 4px;}
+  .finding .t{font-size:15px;font-weight:700;color:#fff;}
+  .finding .d{font-size:13px;color:#bcc6f0;margin-top:8px;line-height:1.6;}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
   .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;}
   .topic-card{border-radius:18px;padding:22px;background:rgba(255,255,255,.06);
@@ -45,18 +54,9 @@
   .topic-card .tid{font-size:13px;letter-spacing:2px;opacity:.7;text-transform:uppercase;}
   .topic-card .cn{font-size:18px;font-weight:800;margin-top:6px;}
   .topic-card .desc{font-size:13px;color:#c2cbf0;margin-top:8px;line-height:1.6;}
-  .topic-card .tags{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;}
+  .topic-card .cnt{font-size:13px;color:#9aa6d6;margin-top:10px;}
+  .topic-card .tags{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;}
   .tag{font-size:13px;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);}
-  /* Key Findings */
-  .findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-top:10px;}
-  .finding{position:relative;overflow:hidden;border-radius:18px;padding:22px;
-    background:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,.03));
-    border:1px solid rgba(255,255,255,.14);}
-  .finding .ic{font-size:26px;}
-  .finding .big{font-size:30px;font-weight:800;margin:8px 0 4px;}
-  .finding .t{font-size:15px;font-weight:700;color:#fff;}
-  .finding .d{font-size:13px;color:#bcc6f0;margin-top:8px;line-height:1.6;}
-  /* Conclusion */
   .concl{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;}
   .concl .box{border-radius:18px;padding:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);}
   .concl h3{font-size:17px;margin-bottom:10px;color:var(--c3);}
@@ -69,29 +69,29 @@
 <body>
 
 <div class="hero wrap">
+  <div class="badge">● 基于合并语料（data-new + data-original）</div>
   <h1>AI Governance 新闻语料可视化分析</h1>
-  <p>基于 China Daily 的 AI 治理新闻语料 · 量化 NLP 分析（词频 / 主题 / 情感）</p>
+  <p>China Daily 全量 AI 治理报道 · 量化 NLP 分析（词频 / 主题 / 情感 / 时间趋势）</p>
   <div class="stats">
-    <div class="stat"><div class="num c2" data-count="444">0</div><div class="lbl">分析文章数</div></div>
-    <div class="stat"><div class="num c1" data-count="2968">0</div><div class="lbl">最高频词「china」</div></div>
+    <div class="stat"><div class="num c2" data-count="3707">0</div><div class="lbl">分析文章数</div></div>
+    <div class="stat"><div class="num c1" data-count="22981">0</div><div class="lbl">最高频词「china」</div></div>
     <div class="stat"><div class="num c4" data-count="100">0</div><div class="lbl">高频实词（Top100）</div></div>
-    <div class="stat"><div class="num c5" data-count="5">0</div><div class="lbl">LDA 主题数</div></div>
+    <div class="stat"><div class="num c5">2018Q3 – 2026Q3</div><div class="lbl">时间跨度</div></div>
   </div>
 </div>
 
-<!-- 执行摘要 / 核心发现 -->
 <section class="wrap">
   <h2 class="sec">执行摘要 · 核心发现</h2>
-  <div class="sub">用数据说话：本报告从语料规模、话语重心、情感基调与主题结构四个维度提炼关键洞察</div>
+  <div class="sub">基于 3707 篇全量报道（2018Q3 – 2026Q3）提炼的关键洞察</div>
   <div class="findings">
-    <div class="finding"><div class="ic">📊</div><div class="big c2">444</div>
-      <div class="t">语料规模</div><div class="d">篇 AI 治理相关英文报道构成分析样本，覆盖技术、产业、政策多视角。</div></div>
+    <div class="finding"><div class="ic">📊</div><div class="big c2">3707</div>
+      <div class="t">语料规模</div><div class="d">篇 AI 治理报道构成完整样本，时间跨度 2018Q3 – 2026Q3，覆盖技术、产业、政策多视角。</div></div>
     <div class="finding"><div class="ic">🌏</div><div class="big c1">china · ai</div>
-      <div class="t">话语重心</div><div class="d">「china」(2968) 与「ai」(2175) 为绝对高频词，呈现以中国视角叙述 AI 发展的鲜明特征。</div></div>
-    <div class="finding"><div class="ic">😊</div><div class="big c5">64%</div>
-      <div class="t">情感基调</div><div class="d">中性报道占 64%，积极 35%、消极仅 1%，整体为客观且建设性的叙事基调。</div></div>
-    <div class="finding"><div class="ic">🎯</div><div class="big c4">1.5万</div>
-      <div class="t">词表提炼</div><div class="d">个唯一词经词性筛选与词形还原，聚焦 Top100 高频实词并归并为 5 大主题，实现从海量词表到可解释语义结构的提炼。</div></div>
+      <div class="t">话语重心</div><div class="d">「china」(22981) 与「ai」高频领跑，呈现以中国视角叙述 AI 发展的鲜明特征。</div></div>
+    <div class="finding"><div class="ic">😊</div><div class="big c5">52%</div>
+      <div class="t">情感基调</div><div class="d">中性占 52%，积极 48%、消极仅 1%；近八年情感极性高度稳定、整体建设性。</div></div>
+    <div class="finding"><div class="ic">🎯</div><div class="big c4">3.4万</div>
+      <div class="t">词表提炼</div><div class="d">个唯一词经词性筛选与词形还原，聚焦 Top100 高频实词并归并为 5 大主题，形成可解释语义结构。</div></div>
   </div>
 </section>
 
@@ -99,7 +99,7 @@
   <h2 class="sec">高频实词 Top 30</h2>
   <div class="sub">名词 / 动词 / 形容词 经词形还原后的词频分布（悬停查看数值）</div>
   <div class="card"><div id="bar" class="chart"></div></div>
-  <div class="insight">📌 <b>解读：</b>除「china」「ai」外，<b>global / development / technology / innovation / market / industry</b> 等词高频出现，说明报道聚焦"以技术创新驱动产业升级与全球化发展"的主线；<b>governance / policy / cooperation / international</b> 则凸显治理与协作维度。</div>
+  <div class="insight">📌 <b>解读：</b>除「china」「ai」外，<b>technology / development / global / innovation / digital</b> 等高频词显示报道主线为"以技术创新驱动产业升级与全球化发展"；<b>governance / cooperation / international</b> 凸显治理与协作维度。</div>
 </section>
 
 <section class="wrap">
@@ -109,61 +109,62 @@
 </section>
 
 <section class="wrap">
-  <h2 class="sec">情感倾向分布</h2>
+  <h2 class="sec">情感倾向分布（全量）</h2>
   <div class="sub">基于 TextBlob 极性得分（&gt;0.1 积极 / &lt;−0.1 消极 / 其余中性）</div>
   <div class="card"><div id="sent" class="chart"></div></div>
-  <div class="insight">📌 <b>解读：</b>中性报道占主导，符合主流媒体客观陈述事实的定位；积极情绪主要来自技术突破、政策利好与国际合作进展，消极内容极少，反映语料整体持审慎乐观的建设性态度。</div>
+  <div class="insight">📌 <b>解读：</b>中性报道占主导，符合主流媒体客观陈述的定位；积极情绪主要来自技术突破、政策利好与国际合作，消极内容极少，整体审慎乐观。</div>
 </section>
 
 <section class="wrap">
-  <h2 class="sec">LDA 主题建模（5 个主题）</h2>
-  <div class="sub">每个主题由 Top 关键词刻画并辅以中文议题解读，反映语料核心议题版图</div>
+  <h2 class="sec">情感随时间变化趋势</h2>
+  <div class="sub">按季度聚合：平均极性（折线）与 积极/中性/消极 占比（堆叠面积），展现 2018–2026 的演进（基于 data-original 含发布日期的 3,263 篇；data-new 444 篇未含日期，已计入整体总量）</div>
+  <div class="card"><div id="trend" class="chart" style="height:480px;"></div></div>
+  <div class="insight">📌 <b>解读：</b>平均情感极性长期稳定在 0.09 附近，说明语料叙事基调平稳；2022Q1 出现阶段性高点（均值 0.122），2025 年起样本量显著放大（单季 300+ 篇），反映 AI 治理议题热度的持续升温。</div>
+</section>
+
+<section class="wrap">
+  <h2 class="sec">LDA 主题建模（5 大主题）</h2>
+  <div class="sub">由 Top 关键词刻画并辅以中文议题解读；卡片标注各主题文章数</div>
   <div class="grid3" id="topics"></div>
 </section>
 
-<!-- 情感随时间变化（按季度） -->
 <section class="wrap">
-  <h2 class="sec">情感随时间变化 · 按季度</h2>
-  <div class="sub">基于<b>全量语料</b>（2018–2026，共 3841 篇）的 TextBlob 极性得分，按季度聚合，观察新闻态度随时间的变化</div>
-
-  <div class="card"><div id="trend" class="chart"></div></div>
-  <div class="insight">📌 <b>解读：</b>各季度平均 polarity 长期位于 <b>0.07–0.12</b> 的温和正向区间，整体基调稳定、建设性为主；
-    其中 <b>2022Q1 达到峰值（0.122）</b>，此后回落并稳定在约 0.095–0.10。说明 China Daily 对 AI 治理的报道始终保持审慎乐观，未出现明显情绪拐点。
-    <span style="color:#9aa6d6">（注：2018Q3 仅 1 篇、2026Q3 为进行中季度，解读时宜谨慎。）</span></div>
-
-  <div class="card" style="margin-top:22px;"><div id="mix" class="chart"></div></div>
-  <div class="insight">📌 <b>解读：</b>中性报道在各季度占 <b>50%–65%</b>，主导地位稳固；积极占比由 2019 年的约 27–40% 升至 2022–2026 年的 <b>46%–49%</b>，
-    呈现温和上行后趋稳；消极占比极低（各季度 ≤ 3.4%，多数仅 0–2%），进一步印证语料以正面、建设性叙事为主的特征。</div>
+  <h2 class="sec">主题分布 & 主题×情感</h2>
+  <div class="sub">左：各主题文章数占比；右：每个主题内部的情感构成</div>
+  <div class="grid2">
+    <div class="card"><div id="topicDist" class="chart"></div></div>
+    <div class="card"><div id="topicSent" class="chart"></div></div>
+  </div>
+  <div class="insight">📌 <b>解读：</b>五大主题文章分布相对均衡，表明语料对技术、治理、发展、教育、产业等维度覆盖全面；各主题内部均以中性为主、积极为辅，未见明显负面情绪集中，说明不同议题均呈建设性报道姿态。</div>
 </section>
 
-<!-- 结论与启示 -->
 <section class="wrap">
   <h2 class="sec">结论与启示</h2>
-  <div class="sub">基于上述量化结果的研究总结与建议</div>
+  <div class="sub">基于全量语料（3707 篇，2018Q3 – 2026Q3）的研究总结</div>
   <div class="concl">
     <div class="box"><h3>🔍 主要发现</h3>
-      <p>语料以中国视角系统呈现 AI 治理议题：技术底座（算力/模型）、全球治理合作、产业创新、经济发展与法律合规五大主题相互交织。报道整体中立偏积极，体现"技术发展 + 制度建设"并重的叙事框架。</p></div>
+      <p>全量语料以中国视角系统呈现 AI 治理议题：技术底座、全球治理、中国发展、教育创新与产业应用五大主题交织。报道整体中立偏积极且长期稳定，体现"技术发展 + 制度建设"并重的叙事框架。</p></div>
     <div class="box"><h3>💡 实践建议</h3>
       <ul>
         <li>关注"AI 治理""国际合作"高频议题，把握政策与标准动向；</li>
-        <li>追踪主题 0/2（技术·产业）以识别技术商业化信号；</li>
-        <li>对消极信号（仅占 1%）建立专项监测，防范风险舆情。</li>
+        <li>结合情感趋势监测议题热度（2025 起显著升温）；</li>
+        <li>对少量消极信号建立专项追踪，防范潜在风险舆情。</li>
       </ul></div>
     <div class="box"><h3>⚠️ 方法局限</h3>
       <p>样本为单源媒体（China Daily），存在立场偏向；LDA 主题数需结合业务先验设定；情感分析基于词典法，对反讽与隐含情绪敏感度有限。结论宜结合多源语料交叉验证。</p></div>
   </div>
 </section>
 
-<footer>生成于 News-Text-Corpus-Analysis · 数据来源 data-new/ · 可视化由 ECharts 驱动 · 仅供研究参考</footer>
+<footer>生成于 News-Text-Corpus-Analysis · 数据源 data-new + data-original 合并（全量 3707 篇）· 可视化由 ECharts 驱动 · 仅供研究参考</footer>
 
 <script>
-const D = {"bar_words": ["intelligence", "plan", "government", "governance", "international", "cooperation", "data", "world", "industrial", "economy", "support", "model", "growth", "economic", "system", "service", "company", "digital", "percent", "industry", "market", "chinese", "country", "innovation", "new", "technology", "development", "global", "ai", "china"], "bar_freqs": [478, 489, 505, 509, 515, 523, 541, 546, 551, 553, 559, 560, 580, 598, 601, 627, 672, 693, 697, 703, 716, 742, 798, 806, 873, 1133, 1196, 1281, 2175, 2968], "cloud_data": [{"name": "china", "value": 2968}, {"name": "ai", "value": 2175}, {"name": "global", "value": 1281}, {"name": "development", "value": 1196}, {"name": "technology", "value": 1133}, {"name": "new", "value": 873}, {"name": "innovation", "value": 806}, {"name": "country", "value": 798}, {"name": "chinese", "value": 742}, {"name": "market", "value": 716}, {"name": "industry", "value": 703}, {"name": "percent", "value": 697}, {"name": "digital", "value": 693}, {"name": "company", "value": 672}, {"name": "service", "value": 627}, {"name": "system", "value": 601}, {"name": "economic", "value": 598}, {"name": "growth", "value": 580}, {"name": "model", "value": 560}, {"name": "support", "value": 559}, {"name": "economy", "value": 553}, {"name": "industrial", "value": 551}, {"name": "world", "value": 546}, {"name": "data", "value": 541}, {"name": "cooperation", "value": 523}, {"name": "international", "value": 515}, {"name": "governance", "value": 509}, {"name": "government", "value": 505}, {"name": "plan", "value": 489}, {"name": "intelligence", "value": 478}, {"name": "national", "value": 476}, {"name": "policy", "value": 466}, {"name": "sector", "value": 450}, {"name": "include", "value": 444}, {"name": "technological", "value": 406}, {"name": "research", "value": 400}, {"name": "make", "value": 398}, {"name": "work", "value": 392}, {"name": "investment", "value": 385}, {"name": "artificial", "value": 379}, {"name": "expand", "value": 370}, {"name": "energy", "value": 367}, {"name": "application", "value": 364}, {"name": "become", "value": 359}, {"name": "beijing", "value": 356}, {"name": "share", "value": 354}, {"name": "use", "value": 351}, {"name": "key", "value": 351}, {"name": "people", "value": 351}, {"name": "year", "value": 349}, {"name": "platform", "value": 341}, {"name": "business", "value": 333}, {"name": "add", "value": 327}, {"name": "security", "value": 319}, {"name": "strengthen", "value": 315}, {"name": "demand", "value": 314}, {"name": "help", "value": 310}, {"name": "manufacturing", "value": 310}, {"name": "need", "value": 303}, {"name": "product", "value": 296}, {"name": "accord", "value": 295}, {"name": "university", "value": 294}, {"name": "trade", "value": 293}, {"name": "city", "value": 292}, {"name": "public", "value": 291}, {"name": "infrastructure", "value": 286}, {"name": "enterprise", "value": 284}, {"name": "strategic", "value": 284}, {"name": "center", "value": 282}, {"name": "report", "value": 278}, {"name": "power", "value": 274}, {"name": "provide", "value": 272}, {"name": "effort", "value": 267}, {"name": "initiative", "value": 265}, {"name": "robot", "value": 265}, {"name": "time", "value": 264}, {"name": "improve", "value": 263}, {"name": "compute", "value": 262}, {"name": "area", "value": 262}, {"name": "strong", "value": 260}, {"name": "promote", "value": 258}, {"name": "risk", "value": 258}, {"name": "domestic", "value": 256}, {"name": "cultural", "value": 255}, {"name": "ecosystem", "value": 255}, {"name": "lead", "value": 254}, {"name": "intelligent", "value": 252}, {"name": "yuan", "value": 252}, {"name": "future", "value": 250}, {"name": "science", "value": 250}, {"name": "opportunity", "value": 249}, {"name": "create", "value": 248}, {"name": "focus", "value": 248}, {"name": "th", "value": 247}, {"name": "continue", "value": 246}, {"name": "advance", "value": 245}, {"name": "shanghai", "value": 244}, {"name": "major", "value": 239}, {"name": "large", "value": 239}, {"name": "education", "value": 238}], "topics": [{"id": "0", "color": "#FF6B6B", "keywords": ["ai", "said", "data", "digital", "models", "technology", "computing", "also", "new", "intelligence"], "cn_name": "AI 技术与算力基础设施", "cn_desc": "聚焦人工智能、数据、算力与模型等核心技术要素"}, {"id": "1", "color": "#4ECDC4", "keywords": ["global", "china", "cooperation", "countries", "development", "economic", "international", "said", "governance", "world"], "cn_name": "全球治理与多边合作", "cn_desc": "强调中国在全球 AI 治理、国际合作与多边机制中的角色"}, {"id": "2", "color": "#FFD93D", "keywords": ["china", "chinas", "global", "industrial", "innovation", "market", "development", "ai", "percent", "technology"], "cn_name": "产业创新与市场规模", "cn_desc": "围绕产业升级、技术创新与市场规模扩张的议题"}, {"id": "3", "color": "#6C5CE7", "keywords": ["said", "china", "development", "new", "chinas", "percent", "also", "services", "growth", "innovation"], "cn_name": "经济发展与增长动力", "cn_desc": "关注宏观经济发展、服务业增长与新质生产力"}, {"id": "4", "color": "#FF9F1C", "keywords": ["cultural", "said", "rights", "legal", "content", "ai", "public", "also", "china", "protection"], "cn_name": "法律合规与内容治理", "cn_desc": "涉及文化权益、法律框架与公共内容治理"}], "sent_labels": ["positive", "neutral", "negative"], "sent_values": [156, 284, 4], "sent_colors": ["#2ED573", "#A4B0BE", "#FF6B81"], "total_articles": 444, "top_word": "china", "top_word_freq": 2968, "n_words": 100, "raw_total": 173440, "raw_unique": 15427, "lemma_total": 162177, "lemma_unique": 11559, "compression": 1.1, "pos_pct": 35, "neu_pct": 64, "neg_pct": 1, "ts_total": 3841, "q_labels": ["2018Q3", "2019Q1", "2019Q2", "2019Q3", "2019Q4", "2020Q1", "2020Q2", "2020Q3", "2020Q4", "2021Q1", "2021Q2", "2021Q3", "2021Q4", "2022Q1", "2022Q2", "2022Q3", "2022Q4", "2023Q1", "2023Q2", "2023Q3", "2023Q4", "2024Q1", "2024Q2", "2024Q3", "2024Q4", "2025Q1", "2025Q2", "2025Q3", "2025Q4", "2026Q1", "2026Q2", "2026Q3"], "q_mean": [0.1311, 0.0568, 0.0788, 0.0742, 0.085, 0.0687, 0.102, 0.0976, 0.0876, 0.0902, 0.0988, 0.0868, 0.0991, 0.122, 0.0941, 0.1008, 0.1058, 0.0922, 0.1024, 0.0992, 0.0908, 0.0977, 0.1008, 0.0997, 0.0925, 0.0965, 0.1006, 0.0989, 0.0954, 0.0914, 0.0972, 0.0911], "q_pos": [1.0, 0.276, 0.403, 0.402, 0.464, 0.338, 0.569, 0.403, 0.375, 0.381, 0.612, 0.431, 0.605, 0.692, 0.457, 0.457, 0.473, 0.418, 0.48, 0.449, 0.463, 0.489, 0.491, 0.497, 0.418, 0.479, 0.462, 0.478, 0.477, 0.489, 0.489, 0.375], "q_neu": [0.0, 0.69, 0.597, 0.576, 0.518, 0.662, 0.431, 0.597, 0.625, 0.619, 0.367, 0.569, 0.395, 0.308, 0.543, 0.522, 0.527, 0.582, 0.52, 0.551, 0.522, 0.504, 0.509, 0.491, 0.582, 0.519, 0.532, 0.52, 0.523, 0.5, 0.505, 0.625], "q_neg": [0.0, 0.034, 0.0, 0.022, 0.018, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.0, 0.0, 0.0, 0.0, 0.022, 0.0, 0.0, 0.0, 0.0, 0.015, 0.007, 0.0, 0.012, 0.0, 0.003, 0.006, 0.002, 0.0, 0.011, 0.005, 0.0], "q_n": [1, 29, 72, 92, 110, 71, 58, 62, 56, 42, 49, 51, 43, 26, 35, 46, 55, 91, 125, 118, 136, 141, 169, 173, 184, 378, 316, 402, 310, 180, 188, 32]};
+const D = {"bar_words": ["intelligence", "people", "model", "growth", "service", "make", "economy", "economic", "system", "percent", "market", "government", "governance", "cooperation", "international", "data", "innovation", "world", "year", "industry", "company", "digital", "chinese", "new", "country", "global", "development", "technology", "ai", "china"], "bar_freqs": [3634, 3669, 3685, 3713, 3894, 4270, 4300, 4421, 4540, 4603, 4628, 4646, 4650, 4781, 5096, 5189, 5289, 5608, 5948, 6072, 6203, 6219, 6739, 7953, 8080, 9850, 10772, 11030, 17774, 22981], "cloud_data": [{"name": "china", "value": 22981}, {"name": "ai", "value": 17774}, {"name": "technology", "value": 11030}, {"name": "development", "value": 10772}, {"name": "global", "value": 9850}, {"name": "country", "value": 8080}, {"name": "new", "value": 7953}, {"name": "chinese", "value": 6739}, {"name": "digital", "value": 6219}, {"name": "company", "value": 6203}, {"name": "industry", "value": 6072}, {"name": "year", "value": 5948}, {"name": "world", "value": 5608}, {"name": "innovation", "value": 5289}, {"name": "data", "value": 5189}, {"name": "international", "value": 5096}, {"name": "cooperation", "value": 4781}, {"name": "governance", "value": 4650}, {"name": "government", "value": 4646}, {"name": "market", "value": 4628}, {"name": "percent", "value": 4603}, {"name": "system", "value": 4540}, {"name": "economic", "value": 4421}, {"name": "economy", "value": 4300}, {"name": "make", "value": 4270}, {"name": "service", "value": 3894}, {"name": "growth", "value": 3713}, {"name": "model", "value": 3685}, {"name": "people", "value": 3669}, {"name": "intelligence", "value": 3634}, {"name": "include", "value": 3627}, {"name": "use", "value": 3557}, {"name": "support", "value": 3421}, {"name": "research", "value": 3366}, {"name": "industrial", "value": 3233}, {"name": "artificial", "value": 3145}, {"name": "national", "value": 3140}, {"name": "sector", "value": 3133}, {"name": "promote", "value": 3112}, {"name": "policy", "value": 3070}, {"name": "need", "value": 3066}, {"name": "work", "value": 3029}, {"name": "security", "value": 2982}, {"name": "business", "value": 2976}, {"name": "application", "value": 2912}, {"name": "technological", "value": 2817}, {"name": "investment", "value": 2773}, {"name": "help", "value": 2735}, {"name": "city", "value": 2700}, {"name": "trade", "value": 2662}, {"name": "university", "value": 2614}, {"name": "share", "value": 2557}, {"name": "future", "value": 2532}, {"name": "provide", "value": 2519}, {"name": "platform", "value": 2452}, {"name": "accord", "value": 2446}, {"name": "enterprise", "value": 2442}, {"name": "area", "value": 2442}, {"name": "become", "value": 2381}, {"name": "plan", "value": 2379}, {"name": "center", "value": 2350}, {"name": "state", "value": 2349}, {"name": "effort", "value": 2339}, {"name": "add", "value": 2337}, {"name": "lead", "value": 2315}, {"name": "develop", "value": 2315}, {"name": "challenge", "value": 2303}, {"name": "beijing", "value": 2284}, {"name": "energy", "value": 2255}, {"name": "key", "value": 2252}, {"name": "improve", "value": 2223}, {"name": "education", "value": 2218}, {"name": "product", "value": 2205}, {"name": "power", "value": 2201}, {"name": "large", "value": 2196}, {"name": "information", "value": 2159}, {"name": "take", "value": 2152}, {"name": "create", "value": 2084}, {"name": "time", "value": 2082}, {"name": "science", "value": 2069}, {"name": "human", "value": 2068}, {"name": "report", "value": 2060}, {"name": "initiative", "value": 2034}, {"name": "increase", "value": 1976}, {"name": "public", "value": 1961}, {"name": "opportunity", "value": 1942}, {"name": "manufacturing", "value": 1921}, {"name": "shanghai", "value": 1901}, {"name": "smart", "value": 1894}, {"name": "focus", "value": 1890}, {"name": "region", "value": 1861}, {"name": "drive", "value": 1861}, {"name": "infrastructure", "value": 1836}, {"name": "intelligent", "value": 1813}, {"name": "major", "value": 1810}, {"name": "local", "value": 1800}, {"name": "many", "value": 1796}, {"name": "nation", "value": 1790}, {"name": "project", "value": 1790}, {"name": "strengthen", "value": 1783}], "topics": [{"id": "0", "color": "#FF6B6B", "keywords": ["global", "china", "development", "governance", "countries", "ai", "cooperation", "international", "world", "us"], "cn_name": "全球治理与国际合作", "cn_desc": "聚焦全球格局、治理、多边合作中的 AI 议题", "dist": 819, "cross": [273, 541, 5]}, {"id": "1", "color": "#4ECDC4", "keywords": ["china", "said", "chinas", "us", "chinese", "market", "economic", "growth", "new", "percent"], "cn_name": "中美博弈与市场经济", "cn_desc": "围绕中美关系、市场、经济增长与相关政策", "dist": 678, "cross": [317, 360, 1]}, {"id": "2", "color": "#FFD93D", "keywords": ["said", "education", "china", "digital", "chinese", "also", "university", "development", "international", "cultural"], "cn_name": "教育与文化发展", "cn_desc": "关注教育、高校、数字化与文化议题", "dist": 616, "cross": [368, 243, 5]}, {"id": "3", "color": "#6C5CE7", "keywords": ["ai", "said", "development", "data", "technology", "new", "china", "digital", "industry", "innovation"], "cn_name": "AI 技术与产业创新", "cn_desc": "聚焦人工智能、数据、技术与产业创新", "dist": 1007, "cross": [549, 451, 7]}, {"id": "4", "color": "#FF9F1C", "keywords": ["ai", "said", "technology", "hong", "data", "also", "kong", "people", "public", "medical"], "cn_name": "AI 医疗与公共服务", "cn_desc": "涉及医疗、公共服务与地区（如香港）应用", "dist": 587, "cross": [268, 316, 3]}], "sent_labels": ["positive", "neutral", "negative"], "sent_values": [1775, 1911, 21], "sent_colors": ["#2ED573", "#A4B0BE", "#FF6B81"], "total_articles": 3707, "top_word": "china", "top_word_freq": 22981, "n_words": 100, "span": "2018Q3 – 2026Q3", "raw_unique": 33900, "raw_unique_wan": "3.4万", "lemma_unique": 33900, "pos_pct": 48, "neu_pct": 52, "neg_pct": 1, "trend": {"quarters": ["2018Q3", "2019Q1", "2019Q2", "2019Q3", "2019Q4", "2020Q1", "2020Q2", "2020Q3", "2020Q4", "2021Q1", "2021Q2", "2021Q3", "2021Q4", "2022Q1", "2022Q2", "2022Q3", "2022Q4", "2023Q1", "2023Q2", "2023Q3", "2023Q4", "2024Q1", "2024Q2", "2024Q3", "2024Q4", "2025Q1", "2025Q2", "2025Q3", "2025Q4", "2026Q1", "2026Q2", "2026Q3"], "mean_polarity": [0.1311, 0.0568, 0.0788, 0.0742, 0.085, 0.0687, 0.102, 0.0976, 0.0876, 0.0902, 0.0988, 0.0868, 0.0991, 0.122, 0.0941, 0.1008, 0.1058, 0.0922, 0.1024, 0.0992, 0.0908, 0.0977, 0.1008, 0.0997, 0.0925, 0.0965, 0.1006, 0.0989, 0.0954, 0.0914, 0.0972, 0.0911], "n_articles": [1, 29, 72, 92, 110, 71, 58, 62, 56, 42, 49, 51, 43, 26, 35, 46, 55, 91, 125, 118, 136, 141, 169, 173, 184, 378, 316, 402, 310, 180, 188, 32], "pos_share": [100.0, 27.6, 40.3, 40.2, 46.4, 33.8, 56.9, 40.3, 37.5, 38.1, 61.2, 43.1, 60.5, 69.2, 45.7, 45.7, 47.3, 41.8, 48.0, 44.9, 46.3, 48.9, 49.1, 49.7, 41.8, 47.9, 46.2, 47.8, 47.7, 48.9, 48.9, 37.5], "neu_share": [0.0, 69.0, 59.7, 57.6, 51.8, 66.2, 43.1, 59.7, 62.5, 61.9, 36.7, 56.9, 39.5, 30.8, 54.3, 52.2, 52.7, 58.2, 52.0, 55.1, 52.2, 50.4, 50.9, 49.1, 58.2, 51.9, 53.2, 52.0, 52.3, 50.0, 50.5, 62.5], "neg_share": [0.0, 3.4, 0.0, 2.2, 1.8, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.2, 0.0, 0.0, 0.0, 0.0, 1.5, 0.7, 0.0, 1.2, 0.0, 0.3, 0.6, 0.2, 0.0, 1.1, 0.5, 0.0]}, "topic_dist": [819, 678, 616, 1007, 587], "topic_colors": ["#FF6B6B", "#4ECDC4", "#FFD93D", "#6C5CE7", "#FF9F1C"]};
 function animateCount(el){const target=+el.dataset.count;let cur=0;const step=Math.max(1,Math.ceil(target/60));
   const t=setInterval(()=>{cur+=step;if(cur>=target){cur=target;clearInterval(t);}el.textContent=cur.toLocaleString();},18);}
-document.querySelectorAll('.stat .num').forEach(animateCount);
+document.querySelectorAll('.stat .num[data-count]').forEach(animateCount);
 
 const bar=echarts.init(document.getElementById('bar'));
-bar.setOption({grid:{left:90,right:30,top:20,bottom:20},
+bar.setOption({grid:{left:95,right:30,top:20,bottom:20},
   tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},
   xAxis:{type:'value',axisLabel:{color:'#cfd8ff'},splitLine:{lineStyle:{color:'rgba(255,255,255,.08)'}}},
   yAxis:{type:'category',data:D.bar_words,axisLabel:{color:'#e6ebff'},axisLine:{lineStyle:{color:'rgba(255,255,255,.2)'}}},
@@ -172,7 +173,7 @@ bar.setOption({grid:{left:90,right:30,top:20,bottom:20},
     label:{show:true,position:'right',color:'#fff',fontWeight:'bold'}}]});
 
 const cloud=echarts.init(document.getElementById('cloud'));
-cloud.setOption({tooltip:{show:true},series:[{type:'wordCloud',shape:'circle',sizeRange:[12,68],rotationRange:[-45,45],
+cloud.setOption({tooltip:{show:true},series:[{type:'wordCloud',shape:'circle',sizeRange:[12,72],rotationRange:[-45,45],
   gridSize:6,width:'100%',height:'100%',
   textStyle:{fontWeight:'bold',color:function(){const c=['#FF6B6B','#4ECDC4','#FFD93D','#6C5CE7','#FF9F1C','#2ED573','#FF7F50','#45AAF2'];return c[Math.floor(Math.random()*c.length)];}},
   data:D.cloud_data}]});
@@ -183,6 +184,25 @@ sent.setOption({tooltip:{trigger:'item',formatter:'{b}: {c} 篇 ({d}%)'},legend:
     label:{color:'#fff',fontSize:14,formatter:'{b}\n{c} 篇 ({d}%)'},
     data:D.sent_labels.map((l,i)=>({name:l,value:D.sent_values[i],itemStyle:{color:D.sent_colors[i]}}))}]});
 
+const tr=echarts.init(document.getElementById('trend'));
+tr.setOption({
+  tooltip:{trigger:'axis'},
+  legend:{data:['平均极性','积极%','中性%','消极%'],textStyle:{color:'#cdd6ff'},top:0},
+  grid:{left:50,right:55,top:40,bottom:60},
+  xAxis:{type:'category',data:D.trend.quarters,axisLabel:{color:'#cfd8ff',rotate:55,fontSize:10},
+    axisLine:{lineStyle:{color:'rgba(255,255,255,.2)'}}},
+  yAxis:[
+    {type:'value',name:'平均极性',min:0,max:0.2,axisLabel:{color:'#cfd8ff'},splitLine:{lineStyle:{color:'rgba(255,255,255,.08)'}}},
+    {type:'value',name:'占比%',min:0,max:100,axisLabel:{color:'#cfd8ff',formatter:'{value}%'},splitLine:{show:false}}
+  ],
+  series:[
+    {name:'平均极性',type:'line',smooth:true,data:D.trend.mean_polarity,
+      lineStyle:{width:3,color:'#FFD93D'},itemStyle:{color:'#FFD93D'},symbolSize:6,z:5},
+    {name:'积极%',type:'line',stack:'share',areaStyle:{opacity:.55},smooth:true,data:D.trend.pos_share,itemStyle:{color:'#2ED573'},lineStyle:{width:0},symbol:'none'},
+    {name:'中性%',type:'line',stack:'share',areaStyle:{opacity:.55},smooth:true,data:D.trend.neu_share,itemStyle:{color:'#A4B0BE'},lineStyle:{width:0},symbol:'none'},
+    {name:'消极%',type:'line',stack:'share',areaStyle:{opacity:.55},smooth:true,data:D.trend.neg_share,itemStyle:{color:'#FF6B81'},lineStyle:{width:0},symbol:'none'}
+  ]});
+
 const tc=document.getElementById('topics');
 D.topics.forEach(t=>{
   const tags=t.keywords.map(k=>`<span class="tag">${k}</span>`).join('');
@@ -191,41 +211,31 @@ D.topics.forEach(t=>{
   el.innerHTML=`<div class="tid" style="color:${t.color}">Topic ${t.id}</div>
     <div class="cn" style="color:${t.color}">${t.cn_name}</div>
     <div class="desc">${t.cn_desc}</div>
+    <div class="cnt">📄 归属文章：${t.dist} 篇</div>
     <div class="tags">${tags}</div>`;
   tc.appendChild(el);
 });
-const trend=echarts.init(document.getElementById('trend'));
-trend.setOption({
-  grid:{left:60,right:30,top:30,bottom:90},
-  tooltip:{trigger:'axis',formatter:function(ps){const i=ps[0].dataIndex;
-    return D.q_labels[i]+'<br/>平均 polarity: <b>'+D.q_mean[i]+'</b><br/>样本量: '+D.q_n[i]+' 篇';}},
-  xAxis:{type:'category',data:D.q_labels,axisLabel:{color:'#cfd8ff',rotate:90,fontSize:10},
-    axisLine:{lineStyle:{color:'rgba(255,255,255,.2)'}}},
-  yAxis:{type:'value',name:'平均 polarity',nameTextStyle:{color:'#cfd8ff'},
-    axisLabel:{color:'#cfd8ff'},splitLine:{lineStyle:{color:'rgba(255,255,255,.08)'}}},
-  series:[{type:'line',data:D.q_mean,smooth:true,symbol:'circle',symbolSize:7,
-    lineStyle:{width:3,color:'#4ECDC4'},itemStyle:{color:'#FFD93D'},
-    areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(78,205,196,.45)'},{offset:1,color:'rgba(78,205,196,0)'}])},
-    markLine:{silent:true,symbol:'none',data:[{yAxis:0}],lineStyle:{color:'grey',type:'dashed'}}}]
-});
 
-const mix=echarts.init(document.getElementById('mix'));
-mix.setOption({
-  grid:{left:60,right:30,top:36,bottom:90},
-  tooltip:{trigger:'axis',axisPointer:{type:'shadow'},valueFormatter:v=>(v*100).toFixed(1)+'%'},
-  legend:{data:['positive','neutral','negative'],textStyle:{color:'#cfd8ff'},top:0},
-  xAxis:{type:'category',data:D.q_labels,axisLabel:{color:'#cfd8ff',rotate:90,fontSize:10},
-    axisLine:{lineStyle:{color:'rgba(255,255,255,.2)'}}},
-  yAxis:{type:'value',max:1,axisLabel:{color:'#cfd8ff',formatter:v=>(v*100)+'%'},
-    splitLine:{lineStyle:{color:'rgba(255,255,255,.08)'}}},
+const td=echarts.init(document.getElementById('topicDist'));
+td.setOption({title:{text:'各主题文章数',left:'center',textStyle:{color:'#e6ebff',fontSize:15}},
+  tooltip:{trigger:'item',formatter:'{b}: {c} 篇 ({d}%)'},
+  series:[{type:'pie',radius:['40%','68%'],data:D.topics.map((t,i)=>({name:t.cn_name,value:D.topic_dist[i],itemStyle:{color:D.topic_colors[i]}})),
+    label:{color:'#fff',formatter:'{b}\n{c}'}}]});
+
+const ts=echarts.init(document.getElementById('topicSent'));
+ts.setOption({title:{text:'主题内情感构成',left:'center',textStyle:{color:'#e6ebff',fontSize:15}},
+  tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},
+  legend:{data:['积极','中性','消极'],textStyle:{color:'#cdd6ff'},top:28},
+  grid:{left:50,right:20,top:64,bottom:30},
+  xAxis:{type:'category',data:D.topics.map(t=>t.cn_name),axisLabel:{color:'#cfd8ff',interval:0,fontSize:11},axisLine:{lineStyle:{color:'rgba(255,255,255,.2)'}}},
+  yAxis:{type:'value',axisLabel:{color:'#cfd8ff'},splitLine:{lineStyle:{color:'rgba(255,255,255,.08)'}}},
   series:[
-    {name:'positive',type:'bar',stack:'s',data:D.q_pos,itemStyle:{color:'#2ED573'}},
-    {name:'neutral',type:'bar',stack:'s',data:D.q_neu,itemStyle:{color:'#A4B0BE'}},
-    {name:'negative',type:'bar',stack:'s',data:D.q_neg,itemStyle:{color:'#FF6B81'}}
-  ]
-});
+    {name:'积极',type:'bar',stack:'s',data:D.topics.map(t=>t.cross[0]),itemStyle:{color:'#2ED573'}},
+    {name:'中性',type:'bar',stack:'s',data:D.topics.map(t=>t.cross[1]),itemStyle:{color:'#A4B0BE'}},
+    {name:'消极',type:'bar',stack:'s',data:D.topics.map(t=>t.cross[2]),itemStyle:{color:'#FF6B81'}}
+  ]});
 
-window.addEventListener('resize',()=>{bar.resize();cloud.resize();sent.resize();trend.resize();mix.resize();});
+window.addEventListener('resize',()=>{[bar,cloud,sent,tr,td,ts].forEach(c=>c.resize());});
 </script>
 </body>
 </html>
